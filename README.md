@@ -16,22 +16,24 @@ The server (`server/app.py`) uses only the Python standard library.
 
 ## Run on spacedock
 
-`./deploy.sh` builds, loads, and replaces the running `avecmoi` container on
-port 8081 (questions kept in the `avecmoi-data` podman volume). Or by hand:
+spacedock runs this declaratively from `.dotfiles`
+(`containers/services/avec-moi-app.nix`, flake input `avec-moi`, port 8081).
+`nixos/avec-moi-app.nix` here is the updated version of that module: it adds
+the `/var/lib/avec-moi:/data` volume for questions and reads `ADMIN_PASSWORD`
+from the sops secret `avec-moi-env`.
 
-```sh
-nix build                       # ./result = OCI image tarball
-podman load -i result
-mkdir -p /srv/avecmoi
-podman run -d --name avecmoi -p <hostport>:8080 \
-  -v /srv/avecmoi:/data \
-  -e ADMIN_PASSWORD='choose-something' \
-  avecmoi:latest
-```
+1. `just sops` in .dotfiles → add `avec-moi-env: ADMIN_PASSWORD=...`
+2. Copy `nixos/avec-moi-app.nix` over `.dotfiles/containers/services/avec-moi-app.nix`
+3. Rebuild spacedock:
+   - to preview this branch before merging:
+     `sudo nixos-rebuild switch --flake .#spacedock --override-input avec-moi github:gignsky/avecmoi/claude/kind-euler-pqpy4v`
+   - after merging: `nix flake update avec-moi`, then rebuild as usual
 
-Questions land in `/srv/avecmoi/questions.jsonl` on the host (one JSON object
-per line: `id, submitted_at, anonymous, name, topic, question`). They
-persist across container rebuilds as long as the volume is mounted.
+Questions land in `/var/lib/avec-moi/questions.jsonl` (one JSON object per
+line: `id, submitted_at, anonymous, name, topic, question`) and survive
+rebuilds.
+
+Without NixOS: `nix build && podman load -i result && podman run -d -p 8081:8080 -v avecmoi-data:/data -e ADMIN_PASSWORD=... avecmoi:latest`
 
 ## Local preview
 
