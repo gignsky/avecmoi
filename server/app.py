@@ -12,10 +12,17 @@ Environment:
   ARCHIVE_DIR     directory served at /matter/     (default: ../archive/why-appraisers-matter)
   DATA_DIR        where questions.jsonl lives      (default: ./data)
   ADMIN_PASSWORD  enables /admin (HTTP Basic, any username). Unset = /admin disabled.
+  ADMIN_PASSWORD_HASH_FILE
+                  alternative to ADMIN_PASSWORD: file holding a crypt(3) hash
+                  (yescrypt/sha512-crypt, as in /etc/shadow or a NixOS
+                  hashedPasswordFile). Checked via libxcrypt; set LIBCRYPT to
+                  its path if it isn't on the default library path.
   HOST, PORT      bind address                     (default: 0.0.0.0:8080)
 """
 
 import base64
+import ctypes
+import ctypes.util
 import csv
 import hmac
 import html
@@ -40,6 +47,7 @@ ARCHIVE_DIR = Path(
 DATA_DIR = Path(os.environ.get("DATA_DIR", HERE / "data")).resolve()
 QUESTIONS_FILE = DATA_DIR / "questions.jsonl"
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+ADMIN_PASSWORD_HASH_FILE = os.environ.get("ADMIN_PASSWORD_HASH_FILE", "")
 HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8080"))
 
@@ -135,6 +143,66 @@ def load_questions():
     return out
 
 
+_crypt_lock = threading.Lock()
+_crypt_fn = None
+
+
+def _crypt(password, setting):
+    """crypt(3) via libxcrypt (Python 3.13+ dropped the crypt module)."""
+    global _crypt_fn
+    with _crypt_lock:  # crypt() uses a static buffer
+        if _crypt_fn is None:
+            lib = ctypes.CDLL(os.environ.get("LIBCRYPT") or ctypes.util.find_library("crypt") or "libcrypt.so.1")
+            _crypt_fn = lib.crypt
+            _crypt_fn.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+            _crypt_fn.restype = ctypes.c_char_p
+        out = _crypt_fn(password.encode("utf-8"), setting.encode("utf-8"))
+        return out.decode("utf-8") if out else ""
+
+
+def _admin_hash():
+    """Read the hash on each check so a rotated secret takes effect without a restart."""
+    if not ADMIN_PASSWORD_HASH_FILE:
+        return ""
+    try:
+        return Path(ADMIN_PASSWORD_HASH_FILE).read_text().strip()
+    except OSError:
+        return ""
+
+
+def admin_enabled():
+    return bool(ADMIN_PASSWORD or ADMIN_PASSWORD_HASH_FILE)
+
+
+def check_admin_password(pw):
+    if ADMIN_PASSWORD:
+        return hmac.compare_digest(pw.encode(), ADMIN_PASSWORD.encode())
+    stored = _admin_hash()
+    if not stored.startswith("$"):
+        return False
+    return hmac.compare_digest(_crypt(pw, stored).encode(), stored.encode())
+
+
+# Failed /admin logins: at most ADMIN_FAIL_MAX per RATE_WINDOW per client.
+ADMIN_FAIL_MAX = 10
+_admin_fails = {}
+
+
+def _admin_locked(client):
+    now = time.monotonic()
+    with _rate_lock:
+        hits = [t for t in _admin_fails.get(client, []) if now - t < RATE_WINDOW]
+        _admin_fails[client] = hits
+        return len(hits) >= ADMIN_FAIL_MAX
+
+
+def _admin_failed(client):
+    with _rate_lock:
+        _admin_fails.setdefault(client, []).append(time.monotonic())
+        if len(_admin_fails) > 10000:
+            _admin_fails.clear()
+
+
 TOPIC_LABELS = {
     "uad36": "UAD 3.6 in general",
     "urar": "The new URAR report",
@@ -222,17 +290,22 @@ class Handler(BaseHTTPRequestHandler):
         self._send(status, json.dumps(obj), "application/json")
 
     def _admin_ok(self):
-        if not ADMIN_PASSWORD:
+        if not admin_enabled():
             self._send(HTTPStatus.NOT_FOUND, "Not found", "text/plain")
+            return False
+        client = self._client()
+        if _admin_locked(client):
+            self._send(HTTPStatus.TOO_MANY_REQUESTS, "Too many failed logins; try again later.", "text/plain")
             return False
         auth = self.headers.get("Authorization", "")
         if auth.startswith("Basic "):
             try:
                 _, _, pw = base64.b64decode(auth[6:]).decode("utf-8").partition(":")
-                if hmac.compare_digest(pw.encode(), ADMIN_PASSWORD.encode()):
+                if check_admin_password(pw):
                     return True
             except Exception:
                 pass
+            _admin_failed(client)
         self._send(
             HTTPStatus.UNAUTHORIZED,
             "Authentication required",
@@ -337,7 +410,14 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     print(f"site={SITE_DIR} archive={ARCHIVE_DIR} data={QUESTIONS_FILE}", flush=True)
-    print("admin: " + ("enabled at /admin" if ADMIN_PASSWORD else "disabled (set ADMIN_PASSWORD)"), flush=True)
+    if ADMIN_PASSWORD:
+        print("admin: enabled at /admin (ADMIN_PASSWORD)", flush=True)
+    elif ADMIN_PASSWORD_HASH_FILE:
+        ok = _admin_hash().startswith("$")
+        print(f"admin: enabled at /admin (hash from {ADMIN_PASSWORD_HASH_FILE}"
+              + ("" if ok else " — WARNING: file missing or not a crypt hash") + ")", flush=True)
+    else:
+        print("admin: disabled (set ADMIN_PASSWORD or ADMIN_PASSWORD_HASH_FILE)", flush=True)
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"listening on http://{HOST}:{PORT}", flush=True)
     httpd.serve_forever()

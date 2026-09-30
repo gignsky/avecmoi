@@ -17,17 +17,15 @@ The server (`server/app.py`) uses only the Python standard library.
 ## Run on spacedock
 
 spacedock runs this declaratively from `.dotfiles`
-(`containers/services/avec-moi-app.nix`, flake input `avec-moi`, port 8081).
-`nixos/avec-moi-app.nix` here is the updated version of that module: it adds
-the `/var/lib/avec-moi:/data` volume for questions and reads `ADMIN_PASSWORD`
-from the sops secret `avec-moi-env`.
+(`containers/services/avec-moi-app.nix`, flake input `avec-moi`, port 8081);
+`nixos/avec-moi-app.nix` here is a copy of that module. It mounts the
+`/var/lib/avec-moi:/data` volume for questions and the `root-password` sops
+secret (a crypt hash) as `ADMIN_PASSWORD_HASH_FILE`, so `/admin` takes root's
+password (any username).
 
-1. `just sops` in .dotfiles → add `avec-moi-env: ADMIN_PASSWORD=...`
-2. Copy `nixos/avec-moi-app.nix` over `.dotfiles/containers/services/avec-moi-app.nix`
-3. Rebuild spacedock:
-   - to preview this branch before merging:
-     `sudo nixos-rebuild switch --flake .#spacedock --override-input avec-moi github:gignsky/avecmoi/claude/kind-euler-pqpy4v`
-   - after merging: `nix flake update avec-moi`, then rebuild as usual
+- Preview this branch before merging:
+  `sudo nixos-rebuild switch --flake .#spacedock --override-input avec-moi github:gignsky/avecmoi/claude/kind-euler-pqpy4v`
+- After merging: `nix flake update avec-moi`, then rebuild as usual.
 
 Questions land in `/var/lib/avec-moi/questions.jsonl` (one JSON object per
 line: `id, submitted_at, anonymous, name, topic, question`) and survive

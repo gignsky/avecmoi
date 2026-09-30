@@ -14,11 +14,13 @@
       server = builtins.path { path = ./server/app.py; name = "avecmoi-app.py"; };
 
       # Wrapper that runs the question-box server. Questions are appended to
-      # $DATA_DIR/questions.jsonl; set ADMIN_PASSWORD to enable /admin.
+      # $DATA_DIR/questions.jsonl; set ADMIN_PASSWORD (or
+      # ADMIN_PASSWORD_HASH_FILE, a crypt hash) to enable /admin.
       mkApp = pkgs: pkgs.writeShellScriptBin "avecmoi" ''
         export SITE_DIR="''${SITE_DIR:-${site}}"
         export ARCHIVE_DIR="''${ARCHIVE_DIR:-${archive}}"
         export DATA_DIR="''${DATA_DIR:-/data}"
+        export LIBCRYPT="''${LIBCRYPT:-${pkgs.libxcrypt}/lib/libcrypt.so}"
         exec ${pkgs.python3}/bin/python3 ${server} "$@"
       '';
     in
