@@ -49,6 +49,7 @@
   .date .cal b { display: block; background: var(--gold); font-size: 12px; letter-spacing: .1em; padding: 2px 0; }
   .date .cal span { display: block; font: 900 30px/1.3 Georgia, serif; }
   .date div:last-child { font-size: 16px; color: #d9d6ce; }
+  .hero-link { color: var(--gold); }
   .date strong { color: var(--paper); font-size: 19px; }
   .cta { display: inline-block; background: var(--gold); color: var(--ink); font-weight: 700; text-decoration: none; padding: 14px 24px; border-radius: 8px; }
   .cta:hover { background: #ffc94d; }
@@ -62,14 +63,13 @@
   form { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
   label { display: block; font-weight: 600; font-size: 15px; margin: 0 0 6px; }
   .field { margin-bottom: 18px; }
-  input[type=text], input[type=email], select, textarea {
+  input[type=text], select, textarea {
     width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
     border-radius: 8px; padding: 10px 12px;
   }
   textarea { min-height: 150px; resize: vertical; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .toggle { display: flex; gap: 10px; align-items: flex-start; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 18px; cursor: pointer; font-weight: 400; }
+    .toggle { display: flex; gap: 10px; align-items: flex-start; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 18px; cursor: pointer; font-weight: 400; }
   .toggle input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--gold-deep); flex: none; }
   .toggle small { display: block; color: var(--muted); }
   .identity { transition: opacity .15s; }
@@ -104,9 +104,11 @@
 
   /* Presenter */
   .presenter { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
-  .badge { width: 88px; height: 88px; border-radius: 16px; background: var(--ink); color: var(--gold); display: grid; place-items: center; font: 900 34px Georgia, serif; flex: none; }
+  .badge { text-decoration: none; width: 88px; height: 88px; border-radius: 16px; background: var(--ink); color: var(--gold); display: grid; place-items: center; font: 900 34px Georgia, serif; flex: none; }
   @media (prefers-color-scheme: dark) { .badge { background: var(--gold); color: var(--ink); } }
   .presenter h3 { margin: 0 0 4px; font-size: 24px; }
+  .presenter h3 a { text-decoration: none; }
+  .presenter h3 a:hover { text-decoration: underline; }
   .presenter p { margin: 0; color: var(--muted); }
 
   footer { background: var(--ink); color: #b5b9bb; padding: 28px 0; font-size: 14px; }
@@ -118,7 +120,6 @@
     .timeline { grid-template-columns: 1fr 1fr; row-gap: 18px; }
   }
   @media (max-width: 480px) {
-    .row { grid-template-columns: 1fr; }
     form { padding: 18px; }
     .hero { padding: 40px 0 48px; }
   }
@@ -133,7 +134,7 @@
     <p class="lead">The redesigned appraisal report changes what appraisers collect, how homes are described, and what you'll see in the report. Send your questions ahead of time — we'll work through them together.</p>
     <div class="date">
       <div class="cal"><b>NOV</b><span>12</span></div>
-      <div><strong>Thursday, November 12, 2026</strong><br>Live Q&amp;A session</div>
+      <div><strong>Thursday, November 12, 2026</strong><br>Live Q&amp;A with <a class="hero-link" href="https://cashconsults.com" rel="noopener">Cash Consulting, LLC</a></div>
     </div>
     <a class="cta" href="#ask">Ask a question</a>
   </div>
@@ -149,19 +150,13 @@
         <form id="qform" method="post" action="/api/questions" novalidate>
           <label class="toggle" for="anonymous">
             <input type="checkbox" id="anonymous" name="anonymous" value="1">
-            <span><strong>Ask anonymously</strong><small>Your name and email won't be saved with the question.</small></span>
+            <span><strong>Ask anonymously</strong><small>Your name won't be saved with the question.</small></span>
           </label>
 
           <div class="identity" id="identity">
-            <div class="row">
-              <div class="field">
-                <label for="name">Name <span class="hint">(optional)</span></label>
-                <input type="text" id="name" name="name" maxlength="120" autocomplete="name">
-              </div>
-              <div class="field">
-                <label for="email">Email <span class="hint">(optional — for a follow-up)</span></label>
-                <input type="email" id="email" name="email" maxlength="200" autocomplete="email">
-              </div>
+            <div class="field">
+              <label for="name">Name <span class="hint">(optional)</span></label>
+              <input type="text" id="name" name="name" maxlength="120" autocomplete="name">
             </div>
           </div>
 
@@ -199,7 +194,7 @@
         <ul>
           <li>You can send as many questions as you like — one per submission works best.</li>
           <li>Questions are reviewed before the session; similar ones may be combined.</li>
-          <li>Anonymous means anonymous: no name, email, or IP address is stored.</li>
+          <li>Anonymous means anonymous: no name or IP address is stored. We never ask for your email.</li>
           <li>Questions about a specific report? Keep addresses and client details out — appraisers can only discuss a report's contents with their client.</li>
         </ul>
       </aside>
@@ -253,11 +248,11 @@
 
   <section id="presenter">
     <div class="wrap presenter">
-      <div class="badge" aria-hidden="true">CC</div>
+      <a class="badge" href="https://cashconsults.com" rel="noopener" aria-label="Cash Consulting, LLC website">CC</a>
       <div>
-        <h3>Cash Consulting, LLC</h3>
+        <h3><a href="https://cashconsults.com" rel="noopener">Cash Consulting, LLC</a></h3>
         <p>Appraisals · Measurements · Photography</p>
-        <p><a href="mailto:Maxwell@CashConsults.com">Maxwell@CashConsults.com</a></p>
+        <p><a href="https://cashconsults.com" rel="noopener">cashconsults.com</a> · <a href="mailto:Maxwell@CashConsults.com">Maxwell@CashConsults.com</a></p>
       </div>
     </div>
   </section>
@@ -265,7 +260,7 @@
 
 <footer>
   <div class="wrap">
-    <span>Ask an Appraiser · UAD 3.6 · November 12, 2026</span>
+    <span>Ask an Appraiser · UAD 3.6 · November 12, 2026 · Presented by <a href="https://cashconsults.com" rel="noopener">Cash Consulting, LLC</a></span>
     <span>Previous session: <a href="/matter/">Why Appraisers Matter</a></span>
   </div>
 </footer>
@@ -309,7 +304,6 @@
     var data = {
       anonymous: anon.checked,
       name: anon.checked ? '' : form.name.value,
-      email: anon.checked ? '' : form.email.value,
       topic: form.topic.value,
       question: q.value,
       website: form.website.value

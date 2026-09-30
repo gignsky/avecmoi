@@ -46,7 +46,6 @@ PORT = int(os.environ.get("PORT", "8080"))
 MAX_BODY = 16 * 1024
 MAX_QUESTION = 4000
 MAX_NAME = 120
-MAX_EMAIL = 200
 MAX_TOPIC = 60
 TOPICS = {
     "uad36",
@@ -101,7 +100,6 @@ def save_question(fields):
         return False, "Please type a question (at least a few words)."
     anonymous = str(fields.get("anonymous", "")).lower() in ("1", "true", "on", "yes")
     name = "" if anonymous else _clean(fields.get("name"), MAX_NAME)
-    email = "" if anonymous else _clean(fields.get("email"), MAX_EMAIL)
     topic = _clean(fields.get("topic"), MAX_TOPIC)
     if topic not in TOPICS:
         topic = "other"
@@ -110,7 +108,6 @@ def save_question(fields):
         "submitted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "anonymous": anonymous or not name,
         "name": name,
-        "email": email,
         "topic": topic,
         "question": question,
     }
@@ -154,8 +151,6 @@ def render_admin(questions):
     rows = []
     for q in reversed(questions):
         who = "Anonymous" if q.get("anonymous") else html.escape(q.get("name", ""))
-        if not q.get("anonymous") and q.get("email"):
-            who += "<br><small>" + html.escape(q["email"]) + "</small>"
         rows.append(
             "<tr><td class=when>{when}</td><td>{who}</td><td>{topic}</td><td class=q>{text}</td></tr>".format(
                 when=html.escape(q.get("submitted_at", "").replace("T", " ").replace("+00:00", " UTC")),
@@ -195,9 +190,9 @@ td.empty{{text-align:center;color:#888;padding:32px}}
 def questions_csv(questions):
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["id", "submitted_at", "anonymous", "name", "email", "topic", "question"])
+    w.writerow(["id", "submitted_at", "anonymous", "name", "topic", "question"])
     for q in questions:
-        w.writerow([q.get(k, "") for k in ("id", "submitted_at", "anonymous", "name", "email", "topic", "question")])
+        w.writerow([q.get(k, "") for k in ("id", "submitted_at", "anonymous", "name", "topic", "question")])
     return buf.getvalue()
 
 

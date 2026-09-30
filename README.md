@@ -16,6 +16,9 @@ The server (`server/app.py`) uses only the Python standard library.
 
 ## Run on spacedock
 
+`./deploy.sh` builds, loads, and replaces the running `avecmoi` container on
+port 8081 (questions kept in the `avecmoi-data` podman volume). Or by hand:
+
 ```sh
 nix build                       # ./result = OCI image tarball
 podman load -i result
@@ -27,7 +30,7 @@ podman run -d --name avecmoi -p <hostport>:8080 \
 ```
 
 Questions land in `/srv/avecmoi/questions.jsonl` on the host (one JSON object
-per line: `id, submitted_at, anonymous, name, email, topic, question`). They
+per line: `id, submitted_at, anonymous, name, topic, question`). They
 persist across container rebuilds as long as the volume is mounted.
 
 ## Local preview
@@ -39,6 +42,6 @@ ADMIN_PASSWORD=test nix run .#serve
 
 ## Privacy
 
-Anonymous submissions store no name or email. No IP addresses are written to
+Email addresses are never collected. Anonymous submissions store no name. No IP addresses are written to
 disk or to the access log; the per-client rate limit (8 per 10 min) is kept in
 memory only.
