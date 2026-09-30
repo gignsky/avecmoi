@@ -1,2 +1,5 @@
 result
 result-*
+data/
+server/data/
+__pycache__/
