@@ -184,6 +184,7 @@
             <label for="website">Leave this empty</label>
             <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
           </div>
+          <input type="hidden" id="formToken" name="formToken" value="__FORM_TOKEN__">
 
           <button type="submit" id="submit">Send question</button>
           <div class="status" id="status" role="status" aria-live="polite"></div>
@@ -307,7 +308,8 @@
       name: anon.checked ? '' : form.name.value,
       topic: form.topic.value,
       question: q.value,
-      website: form.website.value
+      website: form.website.value,
+      formToken: form.formToken.value
     };
     btn.disabled = true;
     btn.textContent = 'Sending…';

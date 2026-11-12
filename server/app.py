@@ -5,6 +5,19 @@ Serves the static site and accepts question submissions, appending each one
 as a JSON line to $DATA_DIR/questions.jsonl so they survive container
 restarts (mount a host directory at $DATA_DIR on spacedock).
 
+/admin lets the operator review submissions and delete individual or
+multiple questions (e.g. bot spam) via checkboxes or a per-row button.
+
+Anti-bot measures on /api/questions, layered (any one tripping silently
+"succeeds" like the honeypot, except an expired/missing form token, which
+is shown a visible error since that can also happen to a real visitor who
+left the page open too long):
+  - a hidden honeypot field real visitors never fill in.
+  - a signed, timestamped token embedded in index.html at serve time;
+    rejected if forged, missing, too fresh (bot-speed submission) or stale.
+  - a simple link filter on the name/question text.
+  - the existing per-client rate limit.
+
 Standard library only, so the Nix/OCI build needs nothing but python3.
 
 Environment:
@@ -18,6 +31,11 @@ Environment:
                   hashedPasswordFile). Checked via libxcrypt; set LIBCRYPT to
                   its path if it isn't on the default library path.
   HOST, PORT      bind address                     (default: 0.0.0.0:8080)
+
+The admin CSRF secret and the form-token signing secret are generated at
+startup with os.urandom and kept in memory only (no new env vars); a
+restart invalidates outstanding tokens, which just makes an open admin tab
+or a form page loaded before the restart show a "please reload" error.
 """
 
 import base64
@@ -30,6 +48,7 @@ import io
 import json
 import mimetypes
 import os
+import re
 import threading
 import time
 import uuid
@@ -74,6 +93,45 @@ _rate = {}
 _rate_lock = threading.Lock()
 _write_lock = threading.Lock()
 
+# Form token: proves the submitter loaded index.html before posting, and
+# that they waited at least MIN_FORM_SECONDS (bots tend to submit instantly).
+_FORM_TOKEN_SECRET = os.urandom(32)
+MIN_FORM_SECONDS = 3
+MAX_FORM_AGE = 3 * 24 * 3600  # a tab left open for a few days is still honoured
+
+_URL_RE = re.compile(r"(https?://|www\.)\S", re.IGNORECASE)
+
+
+def _looks_like_spam(text):
+    return bool(_URL_RE.search(text or ""))
+
+
+def _make_form_token():
+    ts = str(int(time.time()))
+    sig = hmac.new(_FORM_TOKEN_SECRET, ts.encode(), "sha256").hexdigest()[:32]
+    return f"{ts}.{sig}"
+
+
+def _check_form_token(token):
+    """Returns 'ok', 'fast' (submitted too quickly), 'invalid', or 'stale'."""
+    ts_s, _, sig = str(token or "").partition(".")
+    if not ts_s or not sig:
+        return "invalid"
+    expected = hmac.new(_FORM_TOKEN_SECRET, ts_s.encode(), "sha256").hexdigest()[:32]
+    if not hmac.compare_digest(sig, expected):
+        return "invalid"
+    try:
+        age = time.time() - int(ts_s)
+    except ValueError:
+        return "invalid"
+    if age < 0:
+        return "invalid"
+    if age < MIN_FORM_SECONDS:
+        return "fast"
+    if age > MAX_FORM_AGE:
+        return "stale"
+    return "ok"
+
 
 def _rate_ok(client):
     now = time.monotonic()
@@ -103,11 +161,18 @@ def save_question(fields):
     """Validate and persist one submission. Returns (ok, message)."""
     if fields.get("website"):  # honeypot; real people never see this field
         return True, "Thanks!"
+    token_status = _check_form_token(fields.get("formToken"))
+    if token_status == "fast":  # bot-speed submission; pretend to succeed like the honeypot
+        return True, "Thanks!"
+    if token_status in ("invalid", "stale"):
+        return False, "Your form session expired — please reload the page and try again."
     question = _clean_text(fields.get("question"), MAX_QUESTION)
     if len(question) < 5:
         return False, "Please type a question (at least a few words)."
     anonymous = str(fields.get("anonymous", "")).lower() in ("1", "true", "on", "yes")
     name = "" if anonymous else _clean(fields.get("name"), MAX_NAME)
+    if _looks_like_spam(question) or _looks_like_spam(name):
+        return False, "Please remove links from your question and try again."
     topic = _clean(fields.get("topic"), MAX_TOPIC)
     if topic not in TOPICS:
         topic = "other"
@@ -141,6 +206,38 @@ def load_questions():
                 except json.JSONDecodeError:
                     pass
     return out
+
+
+def delete_questions(ids):
+    """Remove questions whose id is in `ids`. Returns the number removed."""
+    ids = {i for i in ids if i}
+    if not ids or not QUESTIONS_FILE.exists():
+        return 0
+    removed = 0
+    with _write_lock:
+        kept_lines = []
+        with open(QUESTIONS_FILE, encoding="utf-8") as f:
+            for line in f:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    rec = json.loads(stripped)
+                except json.JSONDecodeError:
+                    kept_lines.append(stripped + "\n")  # keep unparsable lines; don't guess
+                    continue
+                if rec.get("id") in ids:
+                    removed += 1
+                else:
+                    kept_lines.append(stripped + "\n")
+        if removed:
+            tmp = QUESTIONS_FILE.with_name(QUESTIONS_FILE.name + f".tmp-{uuid.uuid4().hex[:8]}")
+            with open(tmp, "w", encoding="utf-8") as f:
+                f.writelines(kept_lines)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, QUESTIONS_FILE)  # same dir as QUESTIONS_FILE: atomic even across a bind mount
+    return removed
 
 
 _crypt_lock = threading.Lock()
@@ -203,6 +300,21 @@ def _admin_failed(client):
             _admin_fails.clear()
 
 
+# CSRF token for the admin delete form. HTTP Basic credentials are cached by
+# the browser and sent automatically to this origin, so any page the admin
+# visits could otherwise trigger a delete; a page-embedded secret the
+# attacker can't read blocks that.
+_ADMIN_CSRF_SECRET = os.urandom(32)
+
+
+def _admin_csrf_token():
+    return hmac.new(_ADMIN_CSRF_SECRET, b"admin-delete", "sha256").hexdigest()
+
+
+def _check_admin_csrf(token):
+    return hmac.compare_digest(str(token or ""), _admin_csrf_token())
+
+
 TOPIC_LABELS = {
     "uad36": "UAD 3.6 in general",
     "urar": "The new URAR report",
@@ -215,19 +327,35 @@ TOPIC_LABELS = {
 }
 
 
-def render_admin(questions):
+def render_admin(questions, csrf, deleted=None):
     rows = []
     for q in reversed(questions):
+        qid = html.escape(q.get("id", ""), quote=True)
         who = "Anonymous" if q.get("anonymous") else html.escape(q.get("name", ""))
         rows.append(
-            "<tr><td class=when>{when}</td><td>{who}</td><td>{topic}</td><td class=q>{text}</td></tr>".format(
+            "<tr><td class=sel><input type=checkbox name=id value=\"{qid}\" form=qdelform></td>"
+            "<td class=when>{when}</td><td>{who}</td><td>{topic}</td><td class=q>{text}</td>"
+            "<td class=act><form method=post action=\"/admin/questions/delete\" "
+            "onsubmit=\"return confirm('Delete this question?')\">"
+            "<input type=hidden name=csrf value=\"{csrf}\">"
+            "<input type=hidden name=one value=\"{qid}\">"
+            "<button type=submit class=del>Delete</button></form></td></tr>".format(
+                qid=qid,
+                csrf=html.escape(csrf, quote=True),
                 when=html.escape(q.get("submitted_at", "").replace("T", " ").replace("+00:00", " UTC")),
                 who=who,
                 topic=html.escape(TOPIC_LABELS.get(q.get("topic"), q.get("topic", ""))),
                 text=html.escape(q.get("question", "")).replace("\n", "<br>"),
             )
         )
-    body = "\n".join(rows) or '<tr><td colspan=4 class=empty>No questions yet.</td></tr>'
+    body = "\n".join(rows) or '<tr><td colspan=6 class=empty>No questions yet.</td></tr>'
+    flash = ""
+    if deleted is not None:
+        try:
+            n = int(deleted)
+            flash = f'<div class=flash>Deleted {n} question{"" if n == 1 else "s"}.</div>'
+        except ValueError:
+            pass
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -239,20 +367,34 @@ header{{background:#2E3234;color:#F5F3EE;padding:20px 16px}}
 header h1{{margin:0;font:700 22px Georgia,serif}} header span{{color:#FFB81C}}
 main{{padding:16px;max-width:1100px;margin:0 auto}}
 .bar{{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}}
-a.btn{{background:#FFB81C;color:#2E3234;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:600}}
+a.btn,button.btn{{background:#FFB81C;color:#2E3234;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:600;border:0;font-size:15px;cursor:pointer}}
+button.del{{background:#C0392B;color:#fff;border:0;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px}}
+.flash{{background:#2E3234;color:#F5F3EE;padding:8px 14px;border-radius:6px;margin-bottom:12px}}
 .wrap{{overflow-x:auto}}
 table{{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}}
 th,td{{text-align:left;padding:10px;border-bottom:1px solid #e4e1d9;vertical-align:top}}
 th{{background:#e9e6de;font-size:13px;text-transform:uppercase;letter-spacing:.04em}}
 td.when{{white-space:nowrap;font-size:13px;color:#666}} td.q{{min-width:280px}}
-td.empty{{text-align:center;color:#888;padding:32px}}
+td.sel,td.act{{white-space:nowrap}} td.empty{{text-align:center;color:#888;padding:32px}}
 </style></head><body>
 <header><h1>Ask an Appraiser <span>·</span> Submitted Questions</h1></header>
-<main><div class=bar><strong>{len(questions)} question(s)</strong>
+<main>
+{flash}
+<form id=qdelform method=post action="/admin/questions/delete" onsubmit="return confirm('Delete the selected questions?')">
+<input type=hidden name=csrf value="{html.escape(csrf, quote=True)}"></form>
+<div class=bar><strong>{len(questions)} question(s)</strong>
 <a class=btn href="/admin/questions.csv">Download CSV</a>
-<a class=btn href="/admin/questions.jsonl">Download JSONL</a></div>
-<div class=wrap><table><thead><tr><th>Submitted</th><th>From</th><th>Topic</th><th>Question</th></tr></thead>
-<tbody>{body}</tbody></table></div></main></body></html>"""
+<a class=btn href="/admin/questions.jsonl">Download JSONL</a>
+<button type=submit form=qdelform class=btn style="background:#C0392B;color:#fff">Delete selected</button></div>
+<div class=wrap><table><thead><tr><th><input type=checkbox id=selall aria-label="Select all"></th>
+<th>Submitted</th><th>From</th><th>Topic</th><th>Question</th><th>Actions</th></tr></thead>
+<tbody>{body}</tbody></table></div></main>
+<script>
+document.getElementById('selall').addEventListener('change', function (e) {{
+  document.querySelectorAll('input[name=id][form=qdelform]').forEach(function (cb) {{ cb.checked = e.target.checked; }});
+}});
+</script>
+</body></html>"""
 
 
 def questions_csv(questions):
@@ -314,6 +456,13 @@ class Handler(BaseHTTPRequestHandler):
         )
         return False
 
+    def _serve_index(self):
+        target = SITE_DIR / "index.html"
+        if not target.is_file():
+            return self._send(HTTPStatus.NOT_FOUND, "Not found", "text/plain")
+        text = target.read_text(encoding="utf-8").replace("__FORM_TOKEN__", _make_form_token())
+        self._send(HTTPStatus.OK, text, "text/html; charset=utf-8", {"Cache-Control": "no-cache"})
+
     def _static(self, root, rel):
         rel = unquote(rel).lstrip("/")
         if rel == "" or rel.endswith("/"):
@@ -340,7 +489,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(HTTPStatus.OK, "ok", "text/plain")
         if path in ("/admin", "/admin/"):
             if self._admin_ok():
-                self._send(HTTPStatus.OK, render_admin(load_questions()), extra={"Cache-Control": "no-store"})
+                deleted = parse_qs(urlsplit(self.path).query).get("deleted", [None])[0]
+                self._send(
+                    HTTPStatus.OK,
+                    render_admin(load_questions(), _admin_csrf_token(), deleted),
+                    extra={"Cache-Control": "no-store"},
+                )
             return
         if path == "/admin/questions.csv":
             if self._admin_ok():
@@ -362,10 +516,31 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(HTTPStatus.MOVED_PERMANENTLY, "", extra={"Location": "/matter/"})
         if path.startswith("/matter/"):
             return self._static(ARCHIVE_DIR, path[len("/matter/"):])
+        if path in ("/", "/index.html"):
+            return self._serve_index()
         return self._static(SITE_DIR, path)
+
+    def _handle_admin_delete(self):
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        length = max(0, min(length, MAX_BODY))
+        raw = self.rfile.read(length).decode("utf-8", "replace")
+        if not self._admin_ok():
+            return
+        fields = parse_qs(raw, keep_blank_values=True)
+        if not _check_admin_csrf(fields.get("csrf", [""])[0]):
+            return self._send(HTTPStatus.FORBIDDEN, "Forbidden", "text/plain")
+        one = fields.get("one", [""])[0]
+        ids = [one] if one else fields.get("id", [])
+        removed = delete_questions(ids)
+        self._send(HTTPStatus.SEE_OTHER, "", extra={"Location": f"/admin/?deleted={removed}"})
 
     def do_POST(self):
         path = urlsplit(self.path).path
+        if path == "/admin/questions/delete":
+            return self._handle_admin_delete()
         if path != "/api/questions":
             return self._send(HTTPStatus.NOT_FOUND, "Not found", "text/plain")
         wants_json = "application/json" in self.headers.get("Accept", "")
