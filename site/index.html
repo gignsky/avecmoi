@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ask an Appraiser · UAD 3.6</title>
-<meta name="description" content="Ask an Appraiser — November 12, 2026, 12:30–2:30 PM. Send in your questions about UAD 3.6 and the redesigned URAR, with your name or anonymously.">
+<meta name="description" content="Ask an Appraiser — November 12, 2026. A plain-English briefing for realtors on UAD 3.6, the redesigned URAR, and what the biggest appraisal-reporting change in 15+ years means for your listings.">
+<meta name="theme-color" content="#2E3234">
 <style>
   :root {
     --ink: #2E3234;
@@ -18,6 +19,7 @@
     --err: #b3261e;
     --bg: var(--paper);
     --fg: var(--ink);
+    --nav-h: 56px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -31,224 +33,348 @@
     }
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 18px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   a { color: inherit; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
-  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.15; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.12; }
+
+  /* Sticky nav — for jumping around live */
+  nav.top {
+    position: sticky; top: 0; z-index: 50; height: var(--nav-h);
+    background: var(--ink); color: var(--paper);
+    display: flex; align-items: center; border-bottom: 2px solid var(--gold);
+  }
+  nav.top .wrap { display: flex; align-items: center; gap: 18px; width: 100%; }
+  nav.top .brand { font-family: Georgia, serif; font-weight: 900; font-size: 17px; white-space: nowrap; }
+  nav.top .brand b { color: var(--gold); }
+  nav.top .links { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; }
+  nav.top .links a {
+    text-decoration: none; color: #d9d6ce; font-size: 14px; font-weight: 600;
+    padding: 7px 11px; border-radius: 6px; white-space: nowrap;
+  }
+  nav.top .links a:hover { background: rgba(255,184,28,.16); color: var(--paper); }
 
   /* Hero */
-  .hero { background: var(--ink); color: var(--paper); padding: 56px 0 64px; position: relative; overflow: hidden; }
-  .hero::after { content: "3.6"; position: absolute; right: -20px; bottom: -60px; font: 900 260px/1 Georgia, serif; color: rgba(255,184,28,.08); pointer-events: none; }
-  .eyebrow { display: inline-block; background: var(--gold); color: var(--ink); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; }
-  .hero h1 { font-size: clamp(38px, 7vw, 68px); margin: 18px 0 8px; font-weight: 900; }
+  .hero { background: var(--ink); color: var(--paper); padding: 64px 0 72px; position: relative; overflow: hidden; }
+  .hero::after { content: "3.6"; position: absolute; right: -24px; bottom: -72px; font: 900 300px/1 Georgia, serif; color: rgba(255,184,28,.08); pointer-events: none; }
+  .eyebrow { display: inline-block; background: var(--gold); color: var(--ink); font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 11px; border-radius: 4px; }
+  .hero h1 { font-size: clamp(42px, 8vw, 80px); margin: 20px 0 10px; font-weight: 900; }
   .hero h1 span { color: var(--gold); }
-  .hero p.lead { font-size: clamp(18px, 2.4vw, 22px); max-width: 640px; color: #d9d6ce; margin: 0 0 28px; }
-  .date { display: flex; gap: 14px; align-items: center; margin-bottom: 28px; }
-  .date .cal { width: 64px; text-align: center; border-radius: 8px; overflow: hidden; background: var(--paper); color: var(--ink); flex: none; }
-  .date .cal b { display: block; background: var(--gold); font-size: 12px; letter-spacing: .1em; padding: 2px 0; }
-  .date .cal span { display: block; font: 900 30px/1.3 Georgia, serif; }
+  .hero p.lead { font-size: clamp(19px, 2.5vw, 24px); max-width: 680px; color: #d9d6ce; margin: 0 0 30px; }
+  .date { display: flex; gap: 16px; align-items: center; margin-bottom: 30px; }
+  .date .cal { width: 68px; text-align: center; border-radius: 8px; overflow: hidden; background: var(--paper); color: var(--ink); flex: none; }
+  .date .cal b { display: block; background: var(--gold); font-size: 12px; letter-spacing: .1em; padding: 3px 0; }
+  .date .cal span { display: block; font: 900 32px/1.3 Georgia, serif; }
   .date div:last-child { font-size: 16px; color: #d9d6ce; }
   .hero-link { color: var(--gold); }
   .date .time { color: var(--paper); font-weight: 600; }
   .date strong { color: var(--paper); font-size: 19px; }
-  .cta { display: inline-block; background: var(--gold); color: var(--ink); font-weight: 700; text-decoration: none; padding: 14px 24px; border-radius: 8px; }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cta { display: inline-block; background: var(--gold); color: var(--ink); font-weight: 700; text-decoration: none; padding: 15px 26px; border-radius: 8px; }
   .cta:hover { background: #ffc94d; }
 
-  section { padding: 56px 0; }
-  section h2 { font-size: clamp(28px, 4vw, 38px); margin: 0 0 8px; }
-  .sub { color: var(--muted); margin: 0 0 28px; max-width: 680px; }
+  section { padding: 64px 0; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: 0; }
+  section h2 { font-size: clamp(30px, 4.4vw, 44px); margin: 0 0 10px; }
+  .kicker { color: var(--gold-deep); font-weight: 700; text-transform: uppercase; letter-spacing: .09em; font-size: 13px; margin: 0 0 8px; }
+  @media (prefers-color-scheme: dark) { .kicker { color: var(--gold); } }
+  .sub { color: var(--muted); margin: 0 0 32px; max-width: 760px; font-size: clamp(18px, 2vw, 21px); }
 
-  /* Form */
-  .ask-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; align-items: start; }
-  form { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; }
-  label { display: block; font-weight: 600; font-size: 15px; margin: 0 0 6px; }
-  .field { margin-bottom: 18px; }
-  input[type=text], select, textarea {
-    width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
-    border-radius: 8px; padding: 10px 12px;
-  }
-  textarea { min-height: 150px; resize: vertical; }
-  input:focus, select:focus, textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--gold); }
-    .toggle { display: flex; gap: 10px; align-items: flex-start; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 18px; cursor: pointer; font-weight: 400; }
-  .toggle input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--gold-deep); flex: none; }
-  .toggle small { display: block; color: var(--muted); }
-  .identity { transition: opacity .15s; }
-  .identity[aria-disabled=true] { opacity: .4; pointer-events: none; }
-  .hint { font-size: 13px; color: var(--muted); font-weight: 400; }
-  .count { float: right; }
-  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-  button { font: inherit; font-weight: 700; background: var(--ink); color: var(--paper); border: 0; border-radius: 8px; padding: 13px 22px; cursor: pointer; }
-  @media (prefers-color-scheme: dark) { button { background: var(--gold); color: var(--ink); } }
-  button:disabled { opacity: .6; cursor: wait; }
-  .status { margin-top: 14px; padding: 12px 14px; border-radius: 8px; display: none; }
-  .status.show { display: block; }
-  .status.ok { background: rgba(47,125,79,.12); color: var(--ok); }
-  .status.err { background: rgba(179,38,30,.1); color: var(--err); }
-  aside.note { border-left: 4px solid var(--gold); padding: 4px 0 4px 18px; }
-  aside.note h3 { margin: 0 0 8px; font-size: 22px; }
-  aside.note ul { padding-left: 18px; margin: 0; }
-  aside.note li { margin-bottom: 8px; }
+  /* Overview stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 8px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .tile b { display: block; font-family: Georgia, serif; font-size: 30px; color: var(--gold-deep); line-height: 1.1; margin-bottom: 6px; }
+  @media (prefers-color-scheme: dark) { .tile b { color: var(--gold); } }
+  .tile span { color: var(--muted); font-size: 16px; }
 
-  /* Changes */
-  .alt { background: var(--card); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 0 0 40px; padding: 0; list-style: none; }
-  .timeline li { border-top: 4px solid var(--line); padding: 14px 14px 0 0; }
+  .callout { background: var(--card); border-left: 5px solid var(--gold); border-radius: 0 12px 12px 0; padding: 22px 26px; margin: 30px 0 0; }
+  .callout strong { font-size: 20px; font-family: Georgia, serif; }
+  .callout p { margin: 6px 0 0; color: var(--muted); }
+
+  /* Timeline */
+  .alt { background: var(--card); }
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .timeline li { border-top: 5px solid var(--line); padding: 16px 16px 0 0; }
   .timeline li.now { border-top-color: var(--gold); }
-  .timeline b { display: block; font-family: Georgia, serif; font-size: 20px; }
+  .timeline .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-deep); margin-bottom: 4px; }
+  @media (prefers-color-scheme: dark) { .timeline .tag { color: var(--gold); } }
+  .timeline b { display: block; font-family: Georgia, serif; font-size: 22px; }
   .timeline span { color: var(--muted); font-size: 15px; }
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .card { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
-  .card h3 { margin: 0 0 8px; font-size: 20px; }
-  .card p { margin: 0; color: var(--muted); font-size: 16px; }
-  .sources { margin-top: 28px; font-size: 14px; color: var(--muted); }
+  .fineprint { margin-top: 28px; color: var(--muted); font-size: 15px; max-width: 820px; }
+
+  /* Change cards */
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 26px; }
+  .card .num { font-family: Georgia, serif; font-weight: 900; font-size: 15px; color: var(--ink); background: var(--gold); width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 22px; }
+  .card p { margin: 0; color: var(--muted); font-size: 16.5px; }
+
+  /* Vocab table */
+  .vocab { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .vocab th, .vocab td { text-align: left; padding: 15px 20px; border-bottom: 1px solid var(--line); font-size: 17px; }
+  .vocab thead th { background: var(--ink); color: var(--paper); font-family: Georgia, serif; font-size: 15px; letter-spacing: .03em; }
+  .vocab tbody tr:last-child td { border-bottom: 0; }
+  .vocab td.old { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--gold-deep); }
+  .vocab td.new { font-weight: 600; }
+  .vocab td.arrow { color: var(--gold-deep); text-align: center; width: 44px; font-weight: 700; }
+  @media (prefers-color-scheme: dark) { .vocab td.arrow { color: var(--gold); } }
+
+  /* For you — action list + before/after */
+  .acts { display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; align-items: start; }
+  .acts ol { list-style: none; counter-reset: a; margin: 0; padding: 0; }
+  .acts ol li { counter-increment: a; position: relative; padding: 0 0 22px 52px; }
+  .acts ol li::before { content: counter(a); position: absolute; left: 0; top: 0; width: 34px; height: 34px; border-radius: 9px; background: var(--ink); color: var(--gold); font-family: Georgia, serif; font-weight: 900; display: grid; place-items: center; }
+  @media (prefers-color-scheme: dark) { .acts ol li::before { background: var(--gold); color: var(--ink); } }
+  .acts ol li h3 { margin: 2px 0 5px; font-size: 20px; }
+  .acts ol li p { margin: 0; color: var(--muted); font-size: 16.5px; }
+  .ba { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; position: sticky; top: calc(var(--nav-h) + 20px); }
+  .ba h3 { margin: 0 0 16px; font-size: 20px; }
+  .ba .row { margin-bottom: 18px; }
+  .ba .row:last-child { margin-bottom: 0; }
+  .ba .lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+  .ba .before .lbl { color: var(--err); }
+  .ba .after .lbl { color: var(--ok); }
+  .ba blockquote { margin: 0; padding: 14px 16px; border-radius: 10px; font-size: 17px; line-height: 1.5; }
+  .ba .before blockquote { background: rgba(179,38,30,.08); color: var(--fg); }
+  .ba .after blockquote { background: rgba(47,125,79,.1); color: var(--fg); font-weight: 600; }
+
+  .sources { margin-top: 30px; font-size: 14px; color: var(--muted); }
+  .sources a { color: var(--gold-deep); }
+  @media (prefers-color-scheme: dark) { .sources a { color: var(--gold); } }
 
   /* Presenter */
   .presenter { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
-  .badge { text-decoration: none; width: 88px; height: 88px; border-radius: 16px; background: var(--ink); color: var(--gold); display: grid; place-items: center; font: 900 34px Georgia, serif; flex: none; }
+  .badge { text-decoration: none; width: 92px; height: 92px; border-radius: 16px; background: var(--ink); color: var(--gold); display: grid; place-items: center; font: 900 36px Georgia, serif; flex: none; }
   @media (prefers-color-scheme: dark) { .badge { background: var(--gold); color: var(--ink); } }
-  .presenter h3 { margin: 0 0 4px; font-size: 24px; }
+  .presenter h3 { margin: 0 0 4px; font-size: 26px; }
   .presenter h3 a { text-decoration: none; }
   .presenter h3 a:hover { text-decoration: underline; }
   .presenter p { margin: 0; color: var(--muted); }
 
-  footer { background: var(--ink); color: #b5b9bb; padding: 28px 0; font-size: 14px; }
+  footer { background: var(--ink); color: #b5b9bb; padding: 30px 0; font-size: 14px; }
   footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   footer a { color: var(--gold); }
 
-  @media (max-width: 820px) {
-    .ask-grid, .cards { grid-template-columns: 1fr; }
-    .timeline { grid-template-columns: 1fr 1fr; row-gap: 18px; }
+  @media (max-width: 880px) {
+    .tiles { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr; }
+    .acts { grid-template-columns: 1fr; }
+    .ba { position: static; }
+    .timeline { grid-template-columns: 1fr 1fr; row-gap: 22px; }
+    nav.top .brand span { display: none; }
   }
   @media (max-width: 480px) {
-    form { padding: 18px; }
-    .hero { padding: 40px 0 48px; }
+    .hero { padding: 44px 0 52px; }
+    section { padding: 48px 0; }
   }
 </style>
 </head>
 <body>
 
+<nav class="top">
+  <div class="wrap">
+    <span class="brand">Ask an Appraiser <span>· </span><b>UAD 3.6</b></span>
+    <span class="links">
+      <a href="#overview">Overview</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#changes">What's changing</a>
+      <a href="#vocab">New words</a>
+      <a href="#foryou">For you</a>
+    </span>
+  </div>
+</nav>
+
 <header class="hero">
   <div class="wrap">
     <span class="eyebrow">Ask an Appraiser</span>
-    <h1>UAD <span>3.6</span> is here.<br>What's your question?</h1>
-    <p class="lead">The redesigned appraisal report changes what appraisers collect, how homes are described, and what you'll see in the report. Send your questions ahead of time — we'll work through them together.</p>
+    <h1>UAD <span>3.6</span> is here.</h1>
+    <p class="lead">The biggest change to appraisal reporting in over fifteen years — one new report, far more detail, and a different vocabulary. Here is what it means for your listings, in plain English.</p>
     <div class="date">
       <div class="cal"><b>NOV</b><span>12</span></div>
-      <div><strong>Thursday, November 12, 2026</strong><br><span class="time">12:30 – 2:30 PM</span><br>Live Q&amp;A with <a class="hero-link" href="https://cashconsults.com" rel="noopener">Cash Consulting, LLC</a></div>
+      <div><strong>Thursday, November 12, 2026</strong><br><span class="time">12:30 – 2:30 PM</span><br>Live with <a class="hero-link" href="https://cashconsults.com" rel="noopener">Cash Consulting, LLC</a></div>
     </div>
-    <a class="cta" href="#ask">Ask a question</a>
+    <div class="cta-row">
+      <a class="cta" href="#overview">Start here ↓</a>
+    </div>
   </div>
 </header>
 
 <main>
-  <section id="ask">
-    <div class="wrap ask-grid">
-      <div>
-        <h2>Ask your question</h2>
-        <p class="sub">Anything about UAD 3.6, the new URAR, ratings, measurements, comps, or working with appraisers. Put your name on it, or ask anonymously — either way it's saved for the session.</p>
 
-        <form id="qform" method="post" action="/api/questions" novalidate>
-          <label class="toggle" for="anonymous">
-            <input type="checkbox" id="anonymous" name="anonymous" value="1">
-            <span><strong>Ask anonymously</strong><small>Your name won't be saved with the question.</small></span>
-          </label>
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <div class="wrap">
+      <p class="kicker">The one-sentence version</p>
+      <h2>Fannie Mae and Freddie Mac replaced every legacy appraisal form with one dynamic report.</h2>
+      <p class="sub">The familiar 1004 and its cousins are gone. In their place is the redesigned Uniform Residential Appraisal Report — the URAR — a single report that adapts to the property and the assignment. It becomes mandatory for new conventional appraisals on November 2, 2026.</p>
 
-          <div class="identity" id="identity">
-            <div class="field">
-              <label for="name">Name <span class="hint">(optional)</span></label>
-              <input type="text" id="name" name="name" maxlength="120" autocomplete="name">
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="topic">Topic</label>
-            <select id="topic" name="topic">
-              <option value="uad36">UAD 3.6 in general</option>
-              <option value="urar">The new URAR report</option>
-              <option value="ratings">Quality &amp; condition ratings</option>
-              <option value="measurement">Measurement / GLA (ANSI)</option>
-              <option value="comps">Comparables &amp; adjustments</option>
-              <option value="rebuttals">Reconsideration of value</option>
-              <option value="working-with-appraisers">Working with appraisers</option>
-              <option value="other">Something else</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="question">Your question <span class="hint count" id="count">0 / 4000</span></label>
-            <textarea id="question" name="question" maxlength="4000" required placeholder="e.g. How will separate interior and exterior condition ratings show up on my listings' appraisals?"></textarea>
-          </div>
-
-          <div class="hp" aria-hidden="true">
-            <label for="website">Leave this empty</label>
-            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
-          </div>
-          <input type="hidden" id="formToken" name="formToken" value="__FORM_TOKEN__">
-
-          <button type="submit" id="submit">Send question</button>
-          <div class="status" id="status" role="status" aria-live="polite"></div>
-        </form>
+      <div class="tiles">
+        <div class="tile"><b>One report</b><span>A single dynamic URAR replaces the whole stack of legacy forms.</span></div>
+        <div class="tile"><b>Nov 2, 2026</b><span>Mandatory for new appraisals on Fannie Mae &amp; Freddie Mac loans.</span></div>
+        <div class="tile"><b>Data-first</b><span>Delivered as structured data (XML) plus a readable PDF and a photo folder.</span></div>
       </div>
 
-      <aside class="note">
-        <h3>Good to know</h3>
-        <ul>
-          <li>You can send as many questions as you like — one per submission works best.</li>
-          <li>Questions are reviewed before the session; similar ones may be combined.</li>
-          <li>Anonymous means anonymous: no name or IP address is stored. We never ask for your email.</li>
-          <li>Questions about a specific report? Keep addresses and client details out — appraisers can only discuss a report's contents with their client.</li>
-        </ul>
-      </aside>
+      <div class="callout">
+        <strong>It changes how a home is described — not how it is valued.</strong>
+        <p>UAD 3.6 reorganizes and standardizes the information in the report. It does not change the methods an appraiser uses to arrive at an opinion of value.</p>
+      </div>
     </div>
   </section>
 
-  <section class="alt" id="changes">
+  <!-- TIMELINE -->
+  <section class="alt" id="timeline">
     <div class="wrap">
-      <h2>What's changing with UAD 3.6</h2>
-      <p class="sub">Fannie Mae and Freddie Mac have replaced the familiar fixed appraisal forms with one dynamic report. A few of the headline changes we'll dig into:</p>
+      <p class="kicker">Where we are</p>
+      <h2>The timeline</h2>
+      <p class="sub">The mandate has arrived — but a one-time exception gives some lenders a tail into 2027, so you will still see both report formats for a while.</p>
 
       <ol class="timeline">
-        <li><b>Sep 8, 2025</b><span>Limited production begins</span></li>
-        <li><b>Jan 26, 2026</b><span>Broad production — lenders may submit UAD 2.6 or 3.6</span></li>
-        <li class="now"><b>Nov 2, 2026</b><span>UAD 3.6 mandatory for new submissions</span></li>
-        <li><b>May 3, 2027</b><span>UAD 2.6 fully retired (revisions only until then)</span></li>
+        <li>
+          <span class="tag">Through now</span>
+          <b>Broad production</b>
+          <span>Lenders may submit UAD 2.6 or 3.6. You will see both, deal to deal.</span>
+        </li>
+        <li class="now">
+          <span class="tag">In effect</span>
+          <b>Nov 2, 2026</b>
+          <span>UAD 3.6 required for new appraisals submitted for GSE loans — based on the submission date, not the application date.</span>
+        </li>
+        <li>
+          <span class="tag">Exception tail</span>
+          <b>Mar 1, 2027</b>
+          <span>Legacy 2.6 reports filed under an exception lose rep &amp; warrant relief and take a top collateral-risk score.</span>
+        </li>
+        <li>
+          <span class="tag">Final</span>
+          <b>May 20, 2027</b>
+          <span>UAD 3.6 mandatory for everyone; the exception window closes May 19.</span>
+        </li>
       </ol>
+
+      <p class="fineprint">On September 30, 2026 the GSEs granted a one-time policy exception for lenders that could not finish in time — so a lender with an exception may keep filing the legacy format into mid-2027. Only lenders that sell directly to Fannie Mae or Freddie Mac request it; brokers do not. FHA is adopting UAD 3.6 as well (no firm date yet), and VA is expected to follow. The short version for you: during the transition, ask the lender which format applies.</p>
+    </div>
+  </section>
+
+  <!-- WHAT'S CHANGING -->
+  <section id="changes">
+    <div class="wrap">
+      <p class="kicker">Under the hood</p>
+      <h2>What's actually changing</h2>
+      <p class="sub">Six shifts worth knowing. None of them change the standard of value — they change how thoroughly the property is documented and how the data is structured.</p>
 
       <div class="cards">
         <div class="card">
-          <h3>One report, not many forms</h3>
-          <p>The redesigned Uniform Residential Appraisal Report (URAR) replaces the legacy form set and adapts its sections to the property type and assignment.</p>
+          <div class="num">1</div>
+          <h3>One dynamic report</h3>
+          <p>The URAR replaces the legacy form set. The old form number no longer sets the scope — the lender's engagement letter specifies the inspection level and property type, and one report flexes to fit.</p>
         </div>
         <div class="card">
-          <h3>Far more detail</h3>
-          <p>Room-level information, component-by-component update status, energy-efficiency features, and disaster-mitigation characteristics are now captured as data.</p>
+          <div class="num">2</div>
+          <h3>Condition &amp; quality, split out</h3>
+          <p>The C1–C6 and Q1–Q6 scales are unchanged, but the definitions were rewritten for clarity — and the appraiser now rates condition and quality separately for the exterior, the interior, and overall, with room-level detail for each kitchen and bath. These ratings now apply to manufactured homes too.</p>
         </div>
         <div class="card">
-          <h3>Ratings, split and refined</h3>
-          <p>Quality and condition ratings carry updated definitions and are reported separately for the interior and exterior of the home.</p>
+          <div class="num">3</div>
+          <h3>Far more structured detail</h3>
+          <p>Energy-efficient features, disaster-mitigation features, component-by-component update status, broadband availability, ceiling-height categories — captured as discrete data fields instead of being buried in narrative comments.</p>
         </div>
         <div class="card">
-          <h3>Measured square footage</h3>
-          <p>Expectations for how gross living area is measured and reported are more formal — tax records and builder plans carry even less weight.</p>
+          <div class="num">4</div>
+          <h3>New measurement language</h3>
+          <p>"Gross living area (GLA)" is retired. Finished area is now reported as above-grade finished area, broken out by level, with below-grade area reported separately — aligned to the ANSI Z765-2021 measuring standard.</p>
         </div>
         <div class="card">
-          <h3>New terminology</h3>
-          <p>Familiar labels and definitions have changed. Knowing the new vocabulary makes the new report much easier to read.</p>
+          <div class="num">5</div>
+          <h3>A data-first file</h3>
+          <p>The appraisal is delivered as a package — a structured XML data file, a human-readable PDF, and a dedicated folder of property photos — not a single flat PDF. Clean, specific data matters more than ever.</p>
         </div>
         <div class="card">
-          <h3>What it means for you</h3>
-          <p>Better listing data, complete property details, and an appraiser's package matter more than ever. Bring your questions.</p>
+          <div class="num">6</div>
+          <h3>Same opinion of value</h3>
+          <p>Worth repeating: the way an appraiser reaches a value hasn't changed. What changed is how the property is described and how the report is organized.</p>
         </div>
       </div>
 
-      <p class="sources">Sources: <a href="https://sf.freddiemac.com/faqs/uad-and-forms-redesign" rel="noopener">Freddie Mac — UAD &amp; Forms Redesign FAQs</a> ·
-        <a href="https://fanniemae.com/uad" rel="noopener">Fannie Mae — Uniform Appraisal Dataset</a> ·
-        <a href="https://www.mckissock.com/blog/appraisal/the-future-is-now-fannie-mae-and-freddie-mac-announce-uad-3-6-implementation-timeline-and-policy-changes/" rel="noopener">McKissock — UAD 3.6 timeline &amp; policy changes</a></p>
+      <p class="sources">Sources:
+        <a href="https://sf.freddiemac.com/faqs/uad-and-forms-redesign" rel="noopener">Freddie Mac — UAD &amp; Forms Redesign FAQs</a> ·
+        <a href="https://singlefamily.fanniemae.com/originating-underwriting/appraisers/appraiser-update-july-2026" rel="noopener">Fannie Mae — Appraiser Update</a> ·
+        <a href="https://www.nar.realtor/news/real-estate-news/appraisal-ready-what-agents-and-brokers-can-do-now-for-uad-3-6" rel="noopener">NAR — Appraisal-ready: what agents can do now</a> ·
+        <a href="https://www.mckissock.com/blog/appraisal/the-future-is-now-fannie-mae-and-freddie-mac-announce-uad-3-6-implementation-timeline-and-policy-changes/" rel="noopener">McKissock — UAD 3.6 timeline &amp; policy changes</a>
+      </p>
     </div>
   </section>
 
-  <section id="presenter">
+  <!-- VOCAB -->
+  <section class="alt" id="vocab">
+    <div class="wrap">
+      <p class="kicker">Read the new report</p>
+      <h2>Same home, new words</h2>
+      <p class="sub">Several familiar labels have been renamed to match the new data standard. Abbreviations are retired — terms are now spelled out in full. A few you will notice first:</p>
+
+      <table class="vocab">
+        <thead><tr><th>You've always said</th><th></th><th>Now it reads as</th></tr></thead>
+        <tbody>
+          <tr><td class="old">Gross living area (GLA)</td><td class="arrow">→</td><td class="new">Above-grade finished area (by level)</td></tr>
+          <tr><td class="old">Basement</td><td class="arrow">→</td><td class="new">Below-grade area (reported separately)</td></tr>
+          <tr><td class="old">Arm's length transaction</td><td class="arrow">→</td><td class="new">Typically motivated</td></tr>
+          <tr><td class="old">Location</td><td class="arrow">→</td><td class="new">Site influence</td></tr>
+          <tr><td class="old">Actual age</td><td class="arrow">→</td><td class="new">Year built</td></tr>
+          <tr><td class="old">The 1004 (and the form stack)</td><td class="arrow">→</td><td class="new">The redesigned URAR (one dynamic report)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FOR YOU -->
+  <section id="foryou">
+    <div class="wrap">
+      <p class="kicker">The part that matters to you</p>
+      <h2>What it means for realtors</h2>
+      <p class="sub">You don't need to learn how to write the new report — that's the appraiser's job. But the agents who understand it, prepare for it, and explain it to their clients will stand apart. Five moves:</p>
+
+      <div class="acts">
+        <ol>
+          <li>
+            <h3>Document improvements precisely</h3>
+            <p>The report now has structured fields for what was updated, when, and how extensively. Vague listing language doesn't translate. Capture the <em>what</em>, the <em>year</em>, the <em>scope</em>, and the <em>materials</em>.</p>
+          </li>
+          <li>
+            <h3>Build an appraiser package</h3>
+            <p>You know more about the transaction than anyone researching it later ever will. Leave that knowledge behind: improvement dates, permits, a feature list, and the comps you'd point to.</p>
+          </li>
+          <li>
+            <h3>Set your clients' expectations</h3>
+            <p>The report will look different and use unfamiliar words. A quick heads-up to buyers and sellers turns "why does this look strange?" into "ah, that's the new format."</p>
+          </li>
+          <li>
+            <h3>Ask about the format during the transition</h3>
+            <p>Lenders may still submit 2.6 or 3.6 for a while. If a deal's timing could cross a deadline, ask the lender which format applies.</p>
+          </li>
+          <li>
+            <h3>Be the guide, not the blamer</h3>
+            <p>Agents who understand UAD 3.6 stop blaming the lender when an appraisal takes longer or asks for more detail — and become the person their clients call first.</p>
+          </li>
+        </ol>
+
+        <div class="ba">
+          <h3>Listing language, upgraded</h3>
+          <div class="row before">
+            <div class="lbl">Instead of</div>
+            <blockquote>"Beautifully updated throughout."</blockquote>
+          </div>
+          <div class="row after">
+            <div class="lbl">Write</div>
+            <blockquote>"2024 — Kitchen remodeled: cabinetry, countertops, and appliances."</blockquote>
+          </div>
+          <p style="margin:16px 0 0;color:var(--muted);font-size:15px;">Specifics now land in real data fields. Dates, scope, and materials do the work that adjectives used to.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRESENTER -->
+  <section class="alt" id="presenter">
     <div class="wrap presenter">
       <a class="badge" href="https://cashconsults.com" rel="noopener" aria-label="Cash Consulting, LLC website">CC</a>
       <div>
@@ -267,73 +393,5 @@
   </div>
 </footer>
 
-<script>
-(function () {
-  var form = document.getElementById('qform');
-  var anon = document.getElementById('anonymous');
-  var identity = document.getElementById('identity');
-  var q = document.getElementById('question');
-  var count = document.getElementById('count');
-  var status = document.getElementById('status');
-  var btn = document.getElementById('submit');
-
-  function show(kind, msg) {
-    status.className = 'status show ' + kind;
-    status.textContent = msg;
-  }
-  function syncAnon() {
-    identity.setAttribute('aria-disabled', anon.checked ? 'true' : 'false');
-    identity.querySelectorAll('input').forEach(function (i) { i.disabled = anon.checked; });
-  }
-  function syncCount() { count.textContent = q.value.length + ' / 4000'; }
-
-  anon.addEventListener('change', syncAnon);
-  q.addEventListener('input', syncCount);
-  syncAnon(); syncCount();
-
-  // No-JS fallback redirects back here with ?sent=1 / ?error=1.
-  var params = new URLSearchParams(location.search);
-  if (params.has('sent')) show('ok', 'Thanks! Your question has been saved for the session.');
-  if (params.has('error')) show('err', 'Something went wrong — please make sure you typed a question and try again.');
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (q.value.trim().length < 5) {
-      show('err', 'Please type a question (at least a few words).');
-      q.focus();
-      return;
-    }
-    var data = {
-      anonymous: anon.checked,
-      name: anon.checked ? '' : form.name.value,
-      topic: form.topic.value,
-      question: q.value,
-      website: form.website.value,
-      formToken: form.formToken.value
-    };
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    fetch('/api/questions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(function (r) {
-      return r.json().catch(function () { return { ok: false, message: 'Unexpected server response.' }; });
-    }).then(function (res) {
-      if (res.ok) {
-        show('ok', res.message + ' Feel free to ask another.');
-        q.value = ''; syncCount();
-      } else {
-        show('err', res.message || 'Something went wrong. Please try again.');
-      }
-    }).catch(function () {
-      show('err', 'Could not reach the server. Check your connection and try again.');
-    }).then(function () {
-      btn.disabled = false;
-      btn.textContent = 'Send question';
-    });
-  });
-})();
-</script>
 </body>
 </html>
